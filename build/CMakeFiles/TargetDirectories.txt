@@ -1,0 +1,3 @@
+/home/qppon/opencv-sample/build/CMakeFiles/OpenCVExample.dir
+/home/qppon/opencv-sample/build/CMakeFiles/edit_cache.dir
+/home/qppon/opencv-sample/build/CMakeFiles/rebuild_cache.dir

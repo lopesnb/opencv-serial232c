@@ -1,0 +1,1 @@
+/usr/bin/c++ -g "CMakeFiles/opencv-sample.dir/main.cpp.o" -o opencv-sample 

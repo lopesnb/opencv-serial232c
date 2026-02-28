@@ -1,0 +1,20 @@
+[
+{
+  "directory": "/home/qppon/opencv-sample/build",
+  "command": "/usr/bin/c++ -DBOOST_ATOMIC_DYN_LINK -DBOOST_ATOMIC_NO_LIB -DBOOST_SYSTEM_DYN_LINK -DBOOST_SYSTEM_NO_LIB -DBOOST_THREAD_DYN_LINK -DBOOST_THREAD_NO_LIB -isystem /usr/local/include/opencv4 -g -std=gnu++17 -o CMakeFiles/OpenCVExample.dir/main.cpp.o -c /home/qppon/opencv-sample/main.cpp",
+  "file": "/home/qppon/opencv-sample/main.cpp",
+  "output": "CMakeFiles/OpenCVExample.dir/main.cpp.o"
+},
+{
+  "directory": "/home/qppon/opencv-sample/build",
+  "command": "/usr/bin/c++ -DBOOST_ATOMIC_DYN_LINK -DBOOST_ATOMIC_NO_LIB -DBOOST_SYSTEM_DYN_LINK -DBOOST_SYSTEM_NO_LIB -DBOOST_THREAD_DYN_LINK -DBOOST_THREAD_NO_LIB -isystem /usr/local/include/opencv4 -g -std=gnu++17 -o CMakeFiles/OpenCVExample.dir/SerialThread.cpp.o -c /home/qppon/opencv-sample/SerialThread.cpp",
+  "file": "/home/qppon/opencv-sample/SerialThread.cpp",
+  "output": "CMakeFiles/OpenCVExample.dir/SerialThread.cpp.o"
+},
+{
+  "directory": "/home/qppon/opencv-sample/build",
+  "command": "/usr/bin/c++ -DBOOST_ATOMIC_DYN_LINK -DBOOST_ATOMIC_NO_LIB -DBOOST_SYSTEM_DYN_LINK -DBOOST_SYSTEM_NO_LIB -DBOOST_THREAD_DYN_LINK -DBOOST_THREAD_NO_LIB -isystem /usr/local/include/opencv4 -g -std=gnu++17 -o CMakeFiles/OpenCVExample.dir/Converter.cpp.o -c /home/qppon/opencv-sample/Converter.cpp",
+  "file": "/home/qppon/opencv-sample/Converter.cpp",
+  "output": "CMakeFiles/OpenCVExample.dir/Converter.cpp.o"
+}
+]
