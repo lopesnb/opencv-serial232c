@@ -49,6 +49,8 @@ SerialThread::SerialThread(io_context& io, const std::string& port_name)
 
 SerialThread::~SerialThread()
 {
+    closePort();
+    if (worker.joinable()) worker.join();
 }
 
 bool SerialThread::openPort()
@@ -144,6 +146,29 @@ char SerialThread::makeFCS(string message)
     }
     return b;
 }
+void SerialThread::serialLoop()
+{
+    int ans=0;
+    int ansBk=0;
+    EventToWork evWk;
+    do{
+        if(toWorker.try_pop(evWk))
+        {
+            if(evWk.type== WorkerCommand::END) break;
+
+        }
+        int ans=ctrlRead(1);
+        if(ansBk==0 && ans==1)
+        {
+            Event ev;
+            ev.type= DeviceCommand::DATA_RECEIVED;
+            ev.message=readBudasi();
+
+            fromWorker.push(ev);
+        }
+        ansBk=ans;
+    }while(1);
+}
 void SerialThread::bitOn(int b)
 {
 	char recv[100];
@@ -206,7 +231,11 @@ int SerialThread::ctrlRead(int tusinMode)
     }
 	return ret;
 }
-std::vector<std::string>SerialThread::readBudasi()
+void SerialThread::start()
+{
+    worker = std::thread([this]() { serialLoop(); });
+}
+std::vector<std::string> SerialThread::readBudasi()
 {
 	int ret=0,ret1=0;
 	char recv[100];

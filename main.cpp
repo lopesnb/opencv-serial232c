@@ -1,6 +1,7 @@
 #include <opencv2/opencv.hpp>
 #include "SerialThread.h"
 #include "Converter.h"
+//#include "common.h"
 using namespace std;
 using namespace cv;
 const string PORT_NAME = "/dev/ttyUSB0";
@@ -49,7 +50,7 @@ void drawLine(Mat frame,std::vector<double> bu,int lrud,double lbu,double rbu)
     }
 }
 int main(void) {
- 
+    Event ev;
 	VideoCapture capture(0);					//カメラ番号１を起動
 	Mat reciveFrame;
 	Mat frame;
@@ -67,12 +68,12 @@ int main(void) {
     std::vector<double> rbu;
     std::vector<double> ubu;
     std::vector<double> dbu;
+    serialThread.start();
 	while (1) {
 		capture >> reciveFrame;	
         Mat clopFrame=reciveFrame(Rect(RECT_X_START, RECT_Y_START, RECT_X_WIDTH,RECT_Y_HEIGIT));
         resize(clopFrame,frame,Size(),CAMERA_SCALE,CAMERA_SCALE);
         
-       // SueFrame = frame.clone();
         flip(frame,SueFrame,1);
         MotoFrame = frame.clone();
         					//カメラ画像の取得。frameに格納
@@ -82,25 +83,30 @@ int main(void) {
         double lpoint=lbu.size()?lbu.at(0):0;    
         double rpoint=rbu.size()?rbu.at(0):0;    
         sleep(0);
-       // drawLine(SueFrame,lbu,LL);
-       // drawLine(SueFrame,rbu,RR);    
-        /*    
+        drawLine(SueFrame,lbu,LL);
+        drawLine(SueFrame,rbu,RR);    
+            
         drawLine(SueFrame,ubu,UU,lpoint,rpoint);
         drawLine(SueFrame,dbu,DD,lpoint,rpoint);
         drawLine(MotoFrame,lbu,LL);
         drawLine(MotoFrame,rbu,RR);        
         drawLine(MotoFrame,ubu,UU,lpoint,rpoint);
         drawLine(MotoFrame,dbu,DD,lpoint,rpoint);
-*/
+
     	imshow("末口カメラ", SueFrame);			  //frameに格納されている画像を表示
 		imshow("元口カメラ", MotoFrame);	
 		moveWindow("末口カメラ", LEFT_IMAGE_X_POS,TOP_IMAGE_Y_POS);			  //frameに格納されている画像を表示
         moveWindow("元口カメラ", RIGHT_IMAGE_X_POS,TOP_IMAGE_Y_POS);			  //frameに格納されている画像を表示
-		if (waitKey(1) == 27) break;			//ESCキーが入力されるまで実行
-
-        
-        if(ansBk==0 && ans==1) {
-            converter.makeGraphBudasis(serialThread.readBudasi());
+		if (waitKey(1) == 27) 
+        {
+            EventToWork evAns;
+            evAns.type=WorkerCommand::END;
+            serialThread.toWorker.push(evAns);
+            break;			//ESCキーが入力されるまで実行
+        }
+        ev.type=DeviceCommand::IDLE;
+        if(serialThread.fromWorker.try_pop(ev)) {
+            converter.makeGraphBudasis(ev.message);
             lbu=converter.dispHidari();
             rbu=converter.dispMigi();
             ubu=converter.dispUe();
@@ -108,6 +114,9 @@ int main(void) {
         }
         ansBk=ans;
 	}
+    if (serialThread.worker.joinable()) {
+        serialThread.worker.join(); 
+    }
    serialThread.closePort();
     std::cout << "end, from qpmsserial!\n";
 	return 0;

@@ -1358,4 +1358,6 @@ CMakeFiles/OpenCVExample.dir/main.cpp.o: \
  /usr/include/boost/asio/writable_pipe.hpp \
  /usr/include/boost/asio/write_at.hpp \
  /usr/include/boost/asio/impl/write_at.hpp \
- /home/qppon/opencv-sample/Converter.h
+ /home/qppon/opencv-sample/SafeQueue.h /usr/include/c++/13/thread \
+ /usr/include/c++/13/bits/this_thread_sleep.h \
+ /home/qppon/opencv-sample/common.h /home/qppon/opencv-sample/Converter.h

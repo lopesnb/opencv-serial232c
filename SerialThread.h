@@ -2,6 +2,7 @@
 #pragma once
 #include <string>
 #include <boost/asio.hpp>
+#include "SafeQueue.h"
 class SerialThread
 {
 public:
@@ -14,14 +15,19 @@ public:
     void bitOn(int b);
     void bitOff(int b);
     int ctrlRead(int tusinMode);
+    void start();
     std::vector<std::string> readBudasi();
 
+/////////////////////////////////////////
+    SafeQueue<EventToWork> toWorker;
+    SafeQueue<Event> fromWorker;
+    std::thread worker;
 
 private:
     std::string makeDenbun(std::string message);
     bool isFCSMaching(std::string denbun);
     char  makeFCS(std::string message);
-
+    void serialLoop();
 
 // Boostの型をメンバ変数に使う場合は、フルネームで記述する
     boost::asio::serial_port port_;
@@ -32,7 +38,6 @@ private:
     using StopBits = boost::asio::serial_port_base::stop_bits;
     using Parity   = boost::asio::serial_port_base::parity;
     using FlowControl   = boost::asio::serial_port_base::flow_control;
-
 
 };
 
