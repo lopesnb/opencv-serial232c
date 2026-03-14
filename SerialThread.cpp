@@ -35,15 +35,9 @@ static string  LEN_40 = "0028"; //BUDASI ADRES
 //static string LEN_100 = "0064"; //chosin tenso
 //--------------------------------------
 
-
-
-
-
-
-
 //using namespace boost::system;
 SerialThread::SerialThread(io_context& io, const std::string& port_name)
-:port_(io), port_name_(port_name),ctrl(0)
+:port_(io), port_name_(port_name),ctrl(0),io(io), timer(io)
 {
 }
 
@@ -255,4 +249,30 @@ std::vector<std::string> SerialThread::readBudasi()
         budasis.push_back(denbun.substr(23+i*4,4));
     }
 	return budasis;
+}
+bool SerialThread::readWithTimeout(std::string& data, int timeout_ms) {
+    bool topped = false;
+    boost::system::error_code ec_read = boost::asio::error::would_block;
+
+    // 1. 非同期読み込みを開始
+    boost::asio::async_read(port_, boost::asio::buffer(data), 
+        [&](const error_code& ec, size_t length) {
+            ec_read = ec; // 読み終わったらここに入る
+        });
+
+    // 2. タイマーを設定
+    timer.expires_from_now(std::chrono::milliseconds(timeout_ms));
+    timer.async_wait([&](const error_code& ec) {
+        if (!ec) port_.cancel(); // タイムアウトしたら通信を強制キャンセル！
+    });
+
+    // 3. イベントが完了するまで待機（ここがポイント）
+    io.reset();
+    while (io.run_one()) {
+        if (ec_read != boost::asio::error::would_block) {
+            timer.cancel(); // 読み込めたらタイマーを止める
+        }
+    }
+
+    return (ec_read == boost::system::errc::success);
 }

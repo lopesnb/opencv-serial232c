@@ -18,6 +18,7 @@ public:
     void start();
     std::vector<std::string> readBudasi();
 
+
 /////////////////////////////////////////
     SafeQueue<EventToWork> toWorker;
     SafeQueue<Event> fromWorker;
@@ -31,13 +32,17 @@ private:
 
 // Boostの型をメンバ変数に使う場合は、フルネームで記述する
     boost::asio::serial_port port_;
+    boost::asio::io_context& io;
     std::string port_name_;
+    boost::asio::steady_timer timer;
+   // boost::posix_time::milliseconds  timer;
     unsigned int ctrl;
     using BaudRate = boost::asio::serial_port_base::baud_rate;
     using CharactorSize = boost::asio::serial_port_base::character_size;
     using StopBits = boost::asio::serial_port_base::stop_bits;
     using Parity   = boost::asio::serial_port_base::parity;
     using FlowControl   = boost::asio::serial_port_base::flow_control;
+    bool readWithTimeout(std::string& data, int timeout_ms) ;
 
 };
 
