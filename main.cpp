@@ -1,3 +1,26 @@
+////////////////////////////////////////////////////
+//  
+//
+//  
+//
+////////////////////////////////////////////////////
+//  作成時
+//  ハード構成
+//　　　PC：MouseComputer Co.,Ltd. NG-N-i5540　
+//          Intel® Core™ i7-7700HQ × 8
+//          GPU GForce gtx1060
+//          OS Linux Ubuntu 24.04.3 LTS
+//   
+//  ソフト構成
+//　　　IDE　VSCODE　1.109.0
+//      コンパイラ　GCC　13.3.0 デバッガ　GDB 
+//      Boost-1.83.0
+//      Opencv　4.10
+//      PLC 通信Format Fins(OMRON)
+
+//
+////////////////////////////////////////////////////
+
 #include <opencv2/opencv.hpp>
 #include "SerialThread.h"
 #include "Converter.h"
@@ -51,17 +74,22 @@ void drawLine(Mat frame,std::vector<double> bu,int lrud,double lbu,double rbu)
 }
 int main(void) {
     Event ev;
-	VideoCapture capture(0);					//カメラ番号１を起動
+	VideoCapture capture(2);					//カメラ番号１を起動
+	VideoCapture capture2(4);					//カメラ番号１を起動
 	Mat reciveFrame;
+	Mat reciveFrame2;
 	Mat frame;
+	Mat frame2;
 	Mat SueFrame;
     Mat MotoFrame;
+    Mat combinedFrame;
+ 
     boost::asio::io_context io;
     Converter converter;
     const std::string PORT_NAME = "/dev/ttyUSB0";
     SerialThread serialThread(io,PORT_NAME);
     serialThread.openPort();
-   // SerialThread serialThread(io,PORT_NAME);
+  //  SerialThread serialThread(io,PORT_NAME);
      int ans=0;
     int ansBk=0;
     std::vector<double> lbu;
@@ -73,9 +101,13 @@ int main(void) {
 		capture >> reciveFrame;	
         Mat clopFrame=reciveFrame(Rect(RECT_X_START, RECT_Y_START, RECT_X_WIDTH,RECT_Y_HEIGIT));
         resize(clopFrame,frame,Size(),CAMERA_SCALE,CAMERA_SCALE);
+
+        capture2 >> reciveFrame2;	
+        Mat clopFrame2=reciveFrame2(Rect(RECT_X_START, RECT_Y_START, RECT_X_WIDTH,RECT_Y_HEIGIT));
+        resize(clopFrame2,frame2,Size(),CAMERA_SCALE,CAMERA_SCALE);
         
         flip(frame,SueFrame,1);
-        MotoFrame = frame.clone();
+        MotoFrame = frame2.clone();
         					//カメラ画像の取得。frameに格納
         drawCrossLine(SueFrame);
         drawCrossLine(MotoFrame);
@@ -92,11 +124,14 @@ int main(void) {
         drawLine(MotoFrame,rbu,RR);        
         drawLine(MotoFrame,ubu,UU,lpoint,rpoint);
         drawLine(MotoFrame,dbu,DD,lpoint,rpoint);
+        hconcat(SueFrame, MotoFrame, combinedFrame);
+        line(combinedFrame, Point(SueFrame.cols, 0), Point(SueFrame.cols, combinedFrame.rows), Scalar(0, 255, 0), 2);
 
-    	imshow("末口カメラ", SueFrame);			  //frameに格納されている画像を表示
-		imshow("元口カメラ", MotoFrame);	
-		moveWindow("末口カメラ", LEFT_IMAGE_X_POS,TOP_IMAGE_Y_POS);			  //frameに格納されている画像を表示
-        moveWindow("元口カメラ", RIGHT_IMAGE_X_POS,TOP_IMAGE_Y_POS);			  //frameに格納されている画像を表示
+        imshow("Combined Camera", combinedFrame);
+    	//imshow("末口カメラ", SueFrame);			  //frameに格納されている画像を表示
+		//imshow("元口カメラ", MotoFrame);	
+		//moveWindow("末口カメラ", LEFT_IMAGE_X_POS,TOP_IMAGE_Y_POS);			  //frameに格納されている画像を表示
+        //moveWindow("元口カメラ", RIGHT_IMAGE_X_POS,TOP_IMAGE_Y_POS);			  //frameに格納されている画像を表示
 		if (waitKey(1) == 27) 
         {
             EventToWork evAns;
