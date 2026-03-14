@@ -145,23 +145,33 @@ void SerialThread::serialLoop()
     int ans=0;
     int ansBk=0;
     EventToWork evWk;
-    do{
-        if(toWorker.try_pop(evWk))
-        {
-            if(evWk.type== WorkerCommand::END) break;
+    try{
+        do{
+            if(toWorker.try_pop(evWk))
+            {
+                if(evWk.type== WorkerCommand::END) break;
 
-        }
-        int ans=ctrlRead(1);
-        if(ansBk==0 && ans==1)
-        {
-            Event ev;
-            ev.type= DeviceCommand::DATA_RECEIVED;
-            ev.message=readBudasi();
+            }
+            int ans=ctrlRead(1);
+            if(ansBk==0 && ans==1)
+            {
+                Event ev;
+                ev.type= DeviceCommand::DATA_RECEIVED;
+                ev.message=readBudasi();
 
-            fromWorker.push(ev);
-        }
-        ansBk=ans;
-    }while(1);
+                fromWorker.push(ev);
+            }
+            ansBk=ans;
+        }while(1);
+
+    }catch(std::runtime_error e)
+    {
+        Event ev;
+        ev.type= DeviceCommand::ERROR_REPORT;
+        
+        fromWorker.push(ev);
+ 
+    }
 }
 void SerialThread::bitOn(int b)
 {
@@ -177,8 +187,7 @@ void SerialThread::bitOn(int b)
     bitData=(boost::format("%04X") % ctrl).str(); 
 	sd=sd+bitData;
 	sd=makeDenbun(sd);
-	writePort(sd);
-    readPort(27);
+	string denbun=  PLCSendRecieve(sd);
 
 
 }
@@ -198,8 +207,7 @@ void SerialThread::bitOff(int b)
     bitData=(boost::format("%04X") % ctrl).str(); 
 	sd=sd+bitData;
 	sd=makeDenbun(sd);
-	writePort(sd);
-    readPort(27);
+	string denbun=  PLCSendRecieve(sd);
 
 }
 
@@ -212,12 +220,7 @@ int SerialThread::ctrlRead(int tusinMode)
 	sd+=CTRL_READ;
 	sd+=LEN_1;
 	sd=makeDenbun(sd);
-    string denbun;
-    do{
-        writePort(sd);
-        denbun=readPort(31);
-    }while(!isFCSMaching(denbun));
-
+    string denbun=  PLCSendRecieve(sd);
 	if(tusinMode!=999)
 	{
         ret=stoi(denbun.substr(26,1));
@@ -229,6 +232,7 @@ void SerialThread::start()
 {
     worker = std::thread([this]() { serialLoop(); });
 }
+const int MAX_RETRY = 3;
 std::vector<std::string> SerialThread::readBudasi()
 {
 	int ret=0,ret1=0;
@@ -238,11 +242,7 @@ std::vector<std::string> SerialThread::readBudasi()
 	sd+=BUDASI_READ;
 	sd+=LEN_40;
 	sd=makeDenbun(sd);
-    string denbun;
-    do{
-        writePort(sd);
-        denbun=readPort(187);
-    }while(!isFCSMaching(denbun));
+    string denbun=  PLCSendRecieve(sd);
     std::vector<std::string> budasis;
     for(int i=0;i<40;i++)
     {
@@ -250,14 +250,36 @@ std::vector<std::string> SerialThread::readBudasi()
     }
 	return budasis;
 }
+std::string SerialThread::PLCSendRecieve(string sd)
+{
+    string denbun;
+    int retry_count =0;
+    bool success= false;
+    do{
+        writePort(sd);
+        if(readWithTimeout(denbun, 30)&& isFCSMaching(denbun))
+        {
+            success= true;
+            break;
+        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    }while(retry_count <MAX_RETRY );
+    if (!success) throw std::runtime_error("Serial communication failed after max retries.");
+ 	return denbun;
+}
 bool SerialThread::readWithTimeout(std::string& data, int timeout_ms) {
     bool topped = false;
     boost::system::error_code ec_read = boost::asio::error::would_block;
-
+    boost::asio::streambuf buf;
     // 1. 非同期読み込みを開始
-    boost::asio::async_read(port_, boost::asio::buffer(data), 
+    boost::asio::async_read_until(port_, buf, "\n", 
         [&](const error_code& ec, size_t length) {
             ec_read = ec; // 読み終わったらここに入る
+            if (!ec) {
+                // length 分だけ取り出して string に変換
+                std::istream is(&buf);
+                std::getline(is, data); // 改行を除いて data に格納
+            }
         });
 
     // 2. タイマーを設定

@@ -43,6 +43,7 @@ private:
     using Parity   = boost::asio::serial_port_base::parity;
     using FlowControl   = boost::asio::serial_port_base::flow_control;
     bool readWithTimeout(std::string& data, int timeout_ms) ;
+    std::string PLCSendRecieve(std::string sd);
 
 };
 

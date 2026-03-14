@@ -140,12 +140,20 @@ int main(void) {
             break;			//ESCキーが入力されるまで実行
         }
         ev.type=DeviceCommand::IDLE;
-        if(serialThread.fromWorker.try_pop(ev)) {
-            converter.makeGraphBudasis(ev.message);
-            lbu=converter.dispHidari();
-            rbu=converter.dispMigi();
-            ubu=converter.dispUe();
-            dbu=converter.dispSita();
+        if(serialThread.fromWorker.try_pop(ev)) 
+        {
+            if(ev.type == DeviceCommand::DATA_RECEIVED)
+            {
+                converter.makeGraphBudasis(ev.message);
+                lbu=converter.dispHidari();
+                rbu=converter.dispMigi();
+                ubu=converter.dispUe();
+                dbu=converter.dispSita();
+            }
+            if(ev.type == DeviceCommand::ERROR_REPORT)
+            {
+                break;
+            }
         }
         ansBk=ans;
 	}
