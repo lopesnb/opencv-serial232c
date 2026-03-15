@@ -10,6 +10,7 @@ public:
     ~SerialThread();
     bool openPort();
     bool closePort();
+    bool stopPort();
     std::string readPort(int reciveSize);
     void writePort(std::string message);
     void bitOn(int b);
@@ -45,5 +46,6 @@ private:
     bool readWithTimeout(std::string& data, int timeout_ms) ;
     std::string PLCSendRecieve(std::string sd);
 
+    std::atomic<bool> m_isStopping{false};
 };
 

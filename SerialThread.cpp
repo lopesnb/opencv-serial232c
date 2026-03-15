@@ -71,6 +71,16 @@ bool SerialThread::closePort()
     port_.close();
     return false;
 }
+bool SerialThread::stopPort()
+{
+    m_isStopping = true; // ← フラグを立てる
+    timer.cancel(); // 読み込めたらタイマーを止める
+    port_.cancel();
+
+    io.stop();
+
+    return false;
+}
 
 string SerialThread::readPort(int reciveSize)
 {
@@ -149,10 +159,11 @@ void SerialThread::serialLoop()
         do{
             if(toWorker.try_pop(evWk))
             {
-                if(evWk.type== WorkerCommand::END) break;
+                if(evWk.type== WorkerCommand::END) return;
 
             }
             int ans=ctrlRead(1);
+           // int ans=0;//ctrlRead(1);
             if(ansBk==0 && ans==1)
             {
                 Event ev;
@@ -162,9 +173,11 @@ void SerialThread::serialLoop()
                 fromWorker.push(ev);
             }
             ansBk=ans;
+            
         }while(1);
 
-    }catch(std::runtime_error e)
+ 
+    }catch(std::runtime_error& e)
     {
         Event ev;
         ev.type= DeviceCommand::ERROR_REPORT;
@@ -172,6 +185,7 @@ void SerialThread::serialLoop()
         fromWorker.push(ev);
  
     }
+        
 }
 void SerialThread::bitOn(int b)
 {
@@ -286,11 +300,12 @@ bool SerialThread::readWithTimeout(std::string& data, int timeout_ms) {
     timer.expires_from_now(std::chrono::milliseconds(timeout_ms));
     timer.async_wait([&](const error_code& ec) {
         if (!ec) port_.cancel(); // タイムアウトしたら通信を強制キャンセル！
+        if (m_isStopping) throw std::runtime_error("Program Terminated by User.");
     });
-
     // 3. イベントが完了するまで待機（ここがポイント）
     io.reset();
     while (io.run_one()) {
+        if (m_isStopping) throw std::runtime_error("Program Terminated by User.");
         if (ec_read != boost::asio::error::would_block) {
             timer.cancel(); // 読み込めたらタイマーを止める
         }

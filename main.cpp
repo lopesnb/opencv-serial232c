@@ -97,6 +97,7 @@ int main(void) {
     std::vector<double> ubu;
     std::vector<double> dbu;
     serialThread.start();
+    bool tusinError=false;
 	while (1) {
 		capture >> reciveFrame;	
         Mat clopFrame=reciveFrame(Rect(RECT_X_START, RECT_Y_START, RECT_X_WIDTH,RECT_Y_HEIGIT));
@@ -124,6 +125,9 @@ int main(void) {
         drawLine(MotoFrame,rbu,RR);        
         drawLine(MotoFrame,ubu,UU,lpoint,rpoint);
         drawLine(MotoFrame,dbu,DD,lpoint,rpoint);
+
+
+        if(tusinError)  cv::putText(SueFrame,"232c ERROR", cv::Point(25,75),  cv::FONT_HERSHEY_SIMPLEX, 2.5, cv::Scalar(0,0,0), 3 );
         hconcat(SueFrame, MotoFrame, combinedFrame);
         line(combinedFrame, Point(SueFrame.cols, 0), Point(SueFrame.cols, combinedFrame.rows), Scalar(0, 255, 0), 2);
 
@@ -137,6 +141,7 @@ int main(void) {
             EventToWork evAns;
             evAns.type=WorkerCommand::END;
             serialThread.toWorker.push(evAns);
+            serialThread.stopPort();
             break;			//ESCキーが入力されるまで実行
         }
         ev.type=DeviceCommand::IDLE;
@@ -152,7 +157,8 @@ int main(void) {
             }
             if(ev.type == DeviceCommand::ERROR_REPORT)
             {
-                break;
+                tusinError=true;
+                //break;
             }
         }
         ansBk=ans;
