@@ -20,7 +20,7 @@
 
 //
 ////////////////////////////////////////////////////
-
+#include <cstdlib>
 #include <opencv2/opencv.hpp>
 #include "SerialThread.h"
 #include "Converter.h"
@@ -74,8 +74,13 @@ void drawLine(Mat frame,std::vector<double> bu,int lrud,double lbu,double rbu)
 }
 int main(void) {
     Event ev;
-	VideoCapture capture(2);					//カメラ番号１を起動
+   // std::string command = "zenity --error --title='システム異常終了' --text= --width=300";
+   // std::system(command.c_str());
+   // return 1;
+            
+    VideoCapture capture(2);					//カメラ番号１を起動
 	VideoCapture capture2(4);					//カメラ番号１を起動
+   
 	Mat reciveFrame;
 	Mat reciveFrame2;
 	Mat frame;
@@ -88,17 +93,27 @@ int main(void) {
     Converter converter;
     const std::string PORT_NAME = "/dev/ttyUSB0";
     SerialThread serialThread(io,PORT_NAME);
-    serialThread.openPort();
-  //  SerialThread serialThread(io,PORT_NAME);
-     int ans=0;
+    //  SerialThread serialThread(io,PORT_NAME);
+    int ans=0;
     int ansBk=0;
     std::vector<double> lbu;
     std::vector<double> rbu;
     std::vector<double> ubu;
     std::vector<double> dbu;
-    serialThread.start();
     bool tusinError=false;
-	while (1) {
+    try{
+        serialThread.openPort();
+        serialThread.start();
+    }catch(const std::exception& e) {
+    // 「COM3が見つかりません」といったメッセージを画面に出す
+        tusinError=true;
+        if (tusinError) {
+            std::string command = "zenity --error --title='システム異常終了' --text= --width=300";
+            std::system(command.c_str());
+        }     
+        return 0;      
+    }
+ 	while (1) {
 		capture >> reciveFrame;	
         Mat clopFrame=reciveFrame(Rect(RECT_X_START, RECT_Y_START, RECT_X_WIDTH,RECT_Y_HEIGIT));
         resize(clopFrame,frame,Size(),CAMERA_SCALE,CAMERA_SCALE);
@@ -169,7 +184,6 @@ int main(void) {
    serialThread.closePort();
     std::cout << "end, from qpmsserial!\n";
 	return 0;
-
 
 }
 

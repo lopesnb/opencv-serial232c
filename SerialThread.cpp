@@ -49,21 +49,20 @@ SerialThread::~SerialThread()
 
 bool SerialThread::openPort()
 {
-    try {
-        port_.open(port_name_);
-        
+    boost::system::error_code ec;
+    port_.open(port_name_);
+    if (ec) {
+        // 具体的なエラー内容を含めて例外を投げる
+        throw std::runtime_error("ポートが開けません: " + ec.message());
+    }   
         // ★★★ using namespace boost::asio; のおかげで短く書ける ★★★
-        port_.set_option(BaudRate(38400));
-        port_.set_option(CharactorSize(7));
-        port_.set_option(StopBits( StopBits::two));
-        port_.set_option(Parity(Parity::even));
-        port_.set_option(FlowControl(FlowControl::none));
+    port_.set_option(BaudRate(38400));
+    port_.set_option(CharactorSize(7));
+    port_.set_option(StopBits( StopBits::two));
+    port_.set_option(Parity(Parity::even));
+    port_.set_option(FlowControl(FlowControl::none));
 
-        return true;
-    } catch (std::exception& e) {
-        cerr << "Port open error: " << e.what() << endl;
-        return false;
-    }
+    return true;
 }
 
 bool SerialThread::closePort()
